@@ -1,0 +1,106 @@
+---
+title: "Google Capstone project"
+output: html_notebook
+---
+Setting the language to English
+```{r}
+Sys.setlocale("LC_TIME", "English")
+```
+Installing and loading needed packages
+```{r}
+install.packages("tidyverse")
+library("tidyverse")
+install.packages("janitor")
+library("janitor")
+install.packages("lubridate")
+library(lubridate)
+```
+Importing data sets
+```{r}
+apr_2020 <- read.csv("202004-divvy-tripdata.csv")
+may_2020 <- read.csv("202005-divvy-tripdata.csv")
+jun_2020 <- read.csv("202006-divvy-tripdata.csv")
+jul_2020 <- read.csv("202007-divvy-tripdata.csv")
+aug_2020 <- read.csv("202008-divvy-tripdata.csv")
+sep_2020 <- read.csv("202009-divvy-tripdata.csv")
+oct_2020 <- read.csv("202010-divvy-tripdata.csv")
+nov_2020 <- read.csv("202011-divvy-tripdata.csv")
+dec_2020 <- read.csv("202012-divvy-tripdata.csv")
+jan_2021 <- read.csv("202101-divvy-tripdata.csv")
+feb_2021 <- read.csv("202102-divvy-tripdata.csv")
+mar_2021 <- read.csv("202103-divvy-tripdata.csv")
+apr_2021 <- read.csv("202104-divvy-tripdata.csv")
+may_2021 <- read.csv("202105-divvy-tripdata.csv")
+jun_2021 <- read.csv("202106-divvy-tripdata.csv")
+jul_2021 <- read.csv("202107-divvy-tripdata.csv")
+
+```
+Checking if our data sets can be put together
+```{r}
+compare_df_cols_same(
+  apr_2020,may_2020,jun_2020,jul_2020,aug_2020,sep_2020,oct_2020,nov_2020,dec_2020,jan_2021,feb_2021,mar_2021,apr_2021,may_2021,jun_2021,jul_2021,
+  bind_method = c("bind_rows", "rbind"),
+  verbose = TRUE
+)
+```
+At the current status, we can't put our data sets together as in the first 8 data sets, end_station_id and start_station_id have an inconsistent data type.
+Changing them into character
+```{r}
+
+apr_2020 <- mutate(apr_2020,start_station_id = as.character(start_station_id), end_station_id = as.character(end_station_id))
+may_2020 <- mutate(may_2020,start_station_id = as.character(start_station_id), end_station_id = as.character(end_station_id))
+jun_2020 <- mutate(jun_2020,start_station_id = as.character(start_station_id), end_station_id = as.character(end_station_id))
+jul_2020 <- mutate(jul_2020,start_station_id = as.character(start_station_id), end_station_id = as.character(end_station_id))
+aug_2020 <- mutate(aug_2020,start_station_id = as.character(start_station_id), end_station_id = as.character(end_station_id))
+sep_2020 <- mutate(sep_2020,start_station_id = as.character(start_station_id), end_station_id = as.character(end_station_id))
+oct_2020 <- mutate(oct_2020,start_station_id = as.character(start_station_id), end_station_id = as.character(end_station_id))
+nov_2020 <- mutate(nov_2020,start_station_id = as.character(start_station_id), end_station_id = as.character(end_station_id))
+
+```
+Checking if our data sets can be put together now 
+```{r}
+compare_df_cols_same(
+  apr_2020,may_2020,jun_2020,jul_2020,aug_2020,sep_2020,oct_2020,nov_2020,dec_2020,jan_2021,feb_2021,mar_2021,apr_2021,may_2021,jun_2021,jul_2021,
+  bind_method = c("bind_rows", "rbind"),
+  verbose = TRUE
+)
+```
+Putting our data sets together
+```{r}
+cyclistic_clean  <- rbind (apr_2020,may_2020,jun_2020,jul_2020,aug_2020,sep_2020,oct_2020,nov_2020,dec_2020,jan_2021,feb_2021,mar_2021,apr_2021,jun_2021,jul_2021)
+```
+Removing the columns that we are not going to use in the analysis
+```{r}
+cyclistic <- cyclistic_clean[ -c(9:12) ]
+```
+Removing rows contating NA and NULL values
+```{r}
+cyclistic[cyclistic == '' ] <- NA
+cyclistic<- na.omit(cyclistic)
+```
+Calculating the length of every ride
+```{r}
+ride_minutes <- difftime(cyclistic$ended_at,cyclistic$started_at, units = "mins")
+cyclistic <- mutate(cyclistic,ride_length = ride_minutes)
+```
+Adding a column with the starting hour of the ride, a column with the week of the ride and a column with the month of the ride
+```{r}
+hour_ride <- hour(cyclistic$started_at)
+cyclistic <- mutate(cyclistic, ride_time = hour_ride)
+
+day_ride <- wday(cyclistic$started_at, TRUE)
+cyclistic <- mutate(cyclistic, ride_day = day_ride)
+
+month_ride <- month(cyclistic$started_at)
+cyclistic <- mutate(cyclistic, ride_month = month_ride)
+
+```
+If any, excluding negative or very short rides
+```{r}
+cyclistic <- filter(cyclistic, ride_length >= 1)
+
+```
+Exporting the data frame to .csv
+```{r}
+write.csv(cyclistic, "cyclistic.csv")
+```
